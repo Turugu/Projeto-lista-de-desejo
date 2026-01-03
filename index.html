@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Projeto Lista de Desejo</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <div class="Titulo_Lista_Desejo">
+    <h1>Minha Lista de Desejo</h1>
+  </div>
+  </header>
+
+  <main>
+    <div class="Corpo_Do_Site">
+    <section class="card">
+      <h2>Exemplo</h2>
+      <p>Adicione seus itens aqui.</p>
+      <button id="openForm" class="primary">➕ Adicionar item</button>
+      <form id="addForm" class="add-form" style="display:none;" enctype="multipart/form-data">
+        <input name="title" type="text" placeholder="Título" required>
+        <input name="link" type="url" placeholder="https://exemplo.com" required>
+        <input name="category" list="categories" placeholder="Categoria" required>
+        <datalist id="categories">
+          <option value="Tecnologia">
+          <option value="Moda">
+          <option value="Casa">
+          <option value="Viagem">
+          <option value="Outro">
+        </datalist>
+        <input name="image" type="url" placeholder="URL da imagem (opcional)">
+        <input name="imageFile" type="file" accept="image/*">
+        <button type="submit">Adicionar à lista</button>
+      </form>
+
+      <label for="filter" class="sr-only">Filtro:</label>
+      <select id="filter" aria-label="Filtrar por categoria">
+        <option value="all" selected>Todas as categorias</option>
+      </select>
+
+      <div id="list"></div>
+    </section>
+    </div>
+  </main>
+
+  <footer>
+    <div class="Corpo_Do_Site">
+    <small>Feito em HTML, CSS e JavaScript</small>
+    </div>
+  </footer>
+  <script src="script.js" defer></script>
+</body>
+</html>
