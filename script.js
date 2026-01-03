@@ -7,28 +7,55 @@ const suggestions = ['Tecnologia','Moda','Casa','Viagem','Outro'];
 
 const API = 'http://localhost:3000';
 
+/* Local fallback helpers */
+function loadLocalItems() {
+  const raw = localStorage.getItem('wishItems');
+  return raw ? JSON.parse(raw) : [];
+}
+
+function saveLocalItems(items) {
+  localStorage.setItem('wishItems', JSON.stringify(items));
+}
+
 async function loadItems() {
   try {
     const res = await fetch(`${API}/items`);
-    if (!res.ok) return [];
+    if (!res.ok) throw new Error('Resposta do servidor não OK');
     return await res.json();
   } catch (err) {
-    console.error('Erro ao carregar itens:', err);
-    return [];
+    console.warn('Servidor inacessível — usando localStorage:', err);
+    return loadLocalItems();
   }
 }
 
 async function addItemToServer(obj) {
-  const res = await fetch(`${API}/items`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(obj)
-  });
-  return await res.json();
+  try {
+    const res = await fetch(`${API}/items`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(obj)
+    });
+    if (!res.ok) throw new Error('Falha ao salvar no servidor');
+    return await res.json();
+  } catch (err) {
+    console.warn('Não foi possível salvar no servidor, salvando localmente:', err);
+    const items = loadLocalItems();
+    const item = { id: Date.now().toString(), ...obj };
+    items.push(item);
+    saveLocalItems(items);
+    return item;
+  }
 }
 
 async function deleteItemFromServer(id) {
-  await fetch(`${API}/items/${id}`, { method: 'DELETE' });
+  try {
+    const res = await fetch(`${API}/items/${id}`, { method: 'DELETE' });
+    if (!res.ok && res.status !== 204) throw new Error('Falha ao deletar no servidor');
+  } catch (err) {
+    console.warn('Não foi possível deletar no servidor — removendo localmente:', err);
+    const items = loadLocalItems().filter(i => i.id !== id);
+    saveLocalItems(items);
+  }
 }
 
 async function updateCategoryControls() {
