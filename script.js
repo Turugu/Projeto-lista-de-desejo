@@ -5,17 +5,34 @@ const filter = document.getElementById('filter');
 const datalist = document.getElementById('categories');
 const suggestions = ['Tecnologia','Moda','Casa','Viagem','Outro'];
 
-function loadItems() {
-  const raw = localStorage.getItem('wishItems');
-  return raw ? JSON.parse(raw) : [];
+const API = 'http://localhost:3000';
+
+async function loadItems() {
+  try {
+    const res = await fetch(`${API}/items`);
+    if (!res.ok) return [];
+    return await res.json();
+  } catch (err) {
+    console.error('Erro ao carregar itens:', err);
+    return [];
+  }
 }
 
-function saveItems(items) {
-  localStorage.setItem('wishItems', JSON.stringify(items));
+async function addItemToServer(obj) {
+  const res = await fetch(`${API}/items`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(obj)
+  });
+  return await res.json();
 }
 
-function updateCategoryControls() {
-  const items = loadItems();
+async function deleteItemFromServer(id) {
+  await fetch(`${API}/items/${id}`, { method: 'DELETE' });
+}
+
+async function updateCategoryControls() {
+  const items = await loadItems();
   const cats = new Set(suggestions);
   items.forEach(i => cats.add(i.category || 'Outro'));
 
@@ -85,24 +102,23 @@ function renderItem(obj) {
   removeBtn.type = 'button';
   removeBtn.className = 'remove';
   removeBtn.textContent = 'Remover';
-  removeBtn.addEventListener('click', () => {
-    const remaining = loadItems().filter(i => i.id !== obj.id);
-    saveItems(remaining);
-    renderAll();
+  removeBtn.addEventListener('click', async () => {
+    await deleteItemFromServer(obj.id);
+    await renderAll();
   });
   item.appendChild(removeBtn);
 
   list.prepend(item);
 }
 
-function renderAll() {
+async function renderAll() {
   list.innerHTML = '';
-  const items = loadItems();
+  const items = await loadItems();
   const sel = filter ? filter.value : 'all';
   items.slice().reverse().forEach(i => {
     if (sel === 'all' || (i.category || 'Outro') === sel) renderItem(i);
   });
-  updateCategoryControls();
+  await updateCategoryControls();
 }
 
 if (openBtn) {
@@ -117,7 +133,7 @@ if (openBtn) {
   });
 }
 
-if (filter) filter.addEventListener('change', renderAll);
+if (filter) filter.addEventListener('change', () => renderAll());
 
 form.addEventListener('submit', (e) => {
   e.preventDefault();
@@ -130,12 +146,10 @@ form.addEventListener('submit', (e) => {
 
   if (!title || !link || !category) { alert('Título, link e categoria são obrigatórios'); return; }
 
-  function addWithImage(dataURL) {
-    const obj = { id: Date.now().toString(), title, link, image: dataURL || '', category };
-    const items = loadItems();
-    items.push(obj);
-    saveItems(items);
-    renderAll();
+  async function addWithImage(dataURL) {
+    const obj = { title, link, image: dataURL || '', category };
+    await addItemToServer(obj);
+    await renderAll();
 
     form.reset();
     form.title.focus();
@@ -151,7 +165,7 @@ form.addEventListener('submit', (e) => {
 });
 
 // carregar itens salvos ao iniciar
-document.addEventListener('DOMContentLoaded', () => {
-  updateCategoryControls();
-  renderAll();
+document.addEventListener('DOMContentLoaded', async () => {
+  await updateCategoryControls();
+  await renderAll();
 });
